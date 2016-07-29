@@ -1,0 +1,26 @@
+{
+  "name": "pokescans",
+  "version": "0.0.1",
+  "description": "Text and email notifications for Pokemon GO!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/strong-code/pokescans.git"
+  },
+  "author": "strong-code",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/strong-code/pokescans/issues"
+  },
+  "homepage": "https://github.com/strong-code/pokescans#readme",
+  "dependencies": {
+    "googlemaps": "^1.11.1",
+    "lodash": "^4.14.0",
+    "pg": "^6.0.3",
+    "pokemon-go-node-api": "^1.4.0",
+    "twilio": "^2.9.1"
+  }
+}

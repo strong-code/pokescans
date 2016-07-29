@@ -1,0 +1,28 @@
+{
+  "timeout": 5000,
+  "notifications": ["email", "text"],
+  "number": "+11234567890",
+  "email": "you@website.com",
+  "account": {
+    "username": "",
+    "password": "",
+    "provider": "ptc",
+    "location": "Times Square"
+  },
+  "pokemon": [
+    "Rattata",
+    "Pidgey",
+    "Zubat"
+  ],
+  "twilio": {
+    "sid": "AccountSIDGoesHere",
+    "token": "AccountTokenGoesHere",
+    "number": "+11234567890"
+  },
+  "googleMaps": {
+    "key": "GoogleMapsApiKeyGoesHere",
+    "stagger_time": 1000,
+    "encode_polylines": false,
+    "secure": true
+  }
+}
