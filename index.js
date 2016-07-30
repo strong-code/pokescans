@@ -36,33 +36,47 @@ Poke.init(username, password, location, provider, (err) => {
 
   setInterval(() => {
       Poke.Heartbeat((err, hb) => {
-        if (err) {
+        if (err || !hb) {
             console.log(err);
         }
 
         function getName(poke) {
-          const num = parseInt(poke.PokedexTypeId);
+          const num = parseInt(poke.pokemon.PokemonId);
           return Poke.pokemonlist[num-1].name;
+        }
+
+        function getImage(poke) {
+          const baseUrl = 'http://ugc.pokevision.com/images/pokemon/';
+          return baseUrl + '' + poke.pokemon.PokemonId + '.png';
+        }
+
+        function getTTL(poke) {
+          const ttlMillis = poke.TimeTillHiddenMs;
+          const mins = Math.floor(ttlMillis / 60000);
+          const secs = ((ttlMillis % 60000) / 1000).toFixed(0);
+          return mins + ':' + (secs < 10 ? '0' : '') + secs;
         }
 
         let targetsFound;
         let totalFound;
 
         _(hb.cells)
-        .filter(cell => !_.isEmpty(cell.MapPokemon))
-        .flatMap(cell => cell.MapPokemon)
+        .filter(cell => !_.isEmpty(cell.WildPokemon))
+        .flatMap(cell => cell.WildPokemon)
         .tap(cells => totalFound = cells.length)
         .filter(cell => _.includes(targets, getName(cell)))
         .tap(cells => targetsFound = cells.length)
         .map(cell => {
           cell.name = getName(cell);
-          cell.img = allPokes[cell.PokedexTypeId-1].img;
+          cell.img = getImage(cell);
+          cell.ttl = getTTL(cell);
 
           return Map.generate(config.location, cell, (map) => {
             cell.map = map;
+            console.log(cell)
             if (_.includes(config.notifications, "text")) {
               console.log('sending text');
-              // text.sendMessage(cell, config.number)
+              text.sendMessage(cell, config.number)
             }
             if (_.includes(config.notifications, "email")) {
               console.log('sending email');
@@ -73,6 +87,7 @@ Poke.init(username, password, location, provider, (err) => {
         })
         .tap(cells => console.log(`\nSCAN COMPLETE | ${totalFound} total found | ${targetsFound} targets found\n`))
         .value();
+
       });
     }, config.timeout || 5000);
 });

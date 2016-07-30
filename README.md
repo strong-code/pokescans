@@ -28,11 +28,8 @@ Prerequisites:
 - [x] Send text notification when specified pokemon is found
 - [ ] Send email notification
 - [x] Map location of found pokemon with static google map
+- [ ] Create map walk algo to search broader space (ideally 2x)
 - [ ] Create web interface
 - [ ] Create scheduling interface
-
-## Nice-To-Haves
-- [ ] Pokemon sprite as map marker
-- [x] Reverse geocode coords into human-readable address
 
 Thank you to work by Armax (https://github.com/Armax/Pokemon-GO-node-api/) on the Pokemon Go npm package

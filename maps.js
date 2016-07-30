@@ -24,12 +24,13 @@ module.exports = {
   generate: function (start, cell, cb) {
     const params = {
       center: start,
-      zoom: 15,
+      zoom: 16,
       size: '500x500',
       mapType: 'roadmap',
       markers: [
         {
-          location: `${cell.Latitude},${cell.Longitude}`
+          location: `${cell.Latitude},${cell.Longitude}`,
+          icon: cell.img
         }
       ],
       style: {
