@@ -1,6 +1,9 @@
 # Pokescans
 A scanner with text and email notifications for Pokemon Go.
 
+![text](/pokescans_text.png)
+![map](/pokescans_map.png)
+
 ## Setup Instructions
 
 Prerequisites:
