@@ -5,6 +5,7 @@ const account  = config.account;
 const Map      = require('./maps');
 const _        = require('lodash');
 const text     = require('./text');
+const allPokes = require('./pokemons').pokemon;
 const PoGo     = require('pokemon-go-node-api');
 const Poke     = new PoGo.Pokeio();
 const username = account.username;
@@ -20,11 +21,18 @@ const location = {
 //   if (err) throw err;
 // });
 
+function allPokemonNames() {
+  return _.map(allPokes, (poke) => {
+    return poke.name;
+  });
+}
+
 Poke.init(username, password, location, provider, (err) => {
   console.log(`Notifications set to: ${_.join(config.notifications, ', ')}`);
   console.log(`Current location set to: ${Poke.playerInfo.locationName}`);
-  const targeting = (_.isEmpty(config.pokemon) ? 'all' : _.join(config.pokemon, ', '));
-  console.log(`Targeting: ${targeting}\n`);
+
+  const targets = (_.isEmpty(config.pokemon) ? allPokemonNames() : _.join(config.pokemon, ', '));
+  console.log(`Targeting: ${targets}\n`);
 
   setInterval(() => {
       Poke.Heartbeat((err, hb) => {
@@ -37,52 +45,34 @@ Poke.init(username, password, location, provider, (err) => {
           return Poke.pokemonlist[num-1].name;
         }
 
-        let totalFound = 0;
-        const targetsFound = {};
+        let targetsFound;
+        let totalFound;
 
         _(hb.cells)
         .filter(cell => !_.isEmpty(cell.MapPokemon))
         .flatMap(cell => cell.MapPokemon)
-        .filter(cell => _.includes(config.pokemon, getName(cell)))
+        .tap(cells => totalFound = cells.length)
+        .filter(cell => _.includes(targets, getName(cell)))
+        .tap(cells => targetsFound = cells.length)
         .map(cell => {
           cell.name = getName(cell);
-          cell.mapURL = Map.generate(config.location, cell.Latitude, cell.Longitude);
-          if (_.includes(config.notifications, "text")) {
-            text.sendMessage(cell, config.number)
-          }
-          if (_.includes(config.notifications, "email")) {
-            //TODO send an email
-          }
-          console.log(cell)
-          return true;
+          cell.img = allPokes[cell.PokedexTypeId-1].img;
+
+          return Map.generate(config.location, cell, (map) => {
+            cell.map = map;
+            if (_.includes(config.notifications, "text")) {
+              console.log('sending text');
+              // text.sendMessage(cell, config.number)
+            }
+            if (_.includes(config.notifications, "email")) {
+              console.log('sending email');
+              //TODO send an email
+            }
+            return true;
+          });
         })
-        .value()
-
-        // _.each(hb.cells, (cell) => {
-        //   let target = cell.MapPokemon;
-        //   if (!_.isEmpty(target)) {
-        //     totalFound += target.length;
-        //     _.each(target, (poke) => {
-        //       let name = getName(poke);
-        //       if (_.isEmpty(config.pokemon) || (_.includes(config.pokemon, name) && !targetsFound[name])) {
-        //         targetsFound[name] = poke;
-        //         targetsFound[name].mapUrl = Map.generateFromCoordinates(config.location, poke.Latitude, poke.Longitude);
-        //
-        //         console.log(`Found a ${name} at ${poke.Latitude},${poke.Longitude}`);
-        //         console.log(`Map URL: ${targetsFound[name].mapUrl}\n`)
-        //
-        //         if (_.includes(config.notifications, "text")) {
-        //           text.sendMessage(targetsFound, number);
-        //         }
-        //         if (_.includes(config.notifications, "email")) {
-        //           //TODO send an email
-        //         }
-        //       }
-        //     });
-        //   }
-        // });
-
-        console.log(`\nSCAN COMPLETE | ${totalFound} total found | ${_.keys(targetsFound).length} targets found\n`);
+        .tap(cells => console.log(`\nSCAN COMPLETE | ${totalFound} total found | ${targetsFound} targets found\n`))
+        .value();
       });
     }, config.timeout || 5000);
 });
