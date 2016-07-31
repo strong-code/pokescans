@@ -31,63 +31,77 @@ Poke.init(username, password, location, provider, (err) => {
   console.log(`Notifications set to: ${_.join(config.notifications, ', ')}`);
   console.log(`Current location set to: ${Poke.playerInfo.locationName}`);
 
-  const targets = (_.isEmpty(config.pokemon) ? allPokemonNames() : _.join(config.pokemon, ', '));
-  console.log(`Targeting: ${targets}\n`);
+  const targetsByName = (_.isEmpty(config.pokemon) ? allPokemonNames() : config.pokemon);
+  const targets = _.zipObject(targetsByName, _.map(targetsByName, () => {return false}));
+  console.log(`Targeting: ${targetsByName}\n`);
 
   setInterval(() => {
-      Poke.Heartbeat((err, hb) => {
-        if (err || !hb) {
-            console.log(err);
+    if (_.isEmpty(_.filter(targets, (poke) => !poke))) {
+      console.log('Found all targeted pokemon, exiting');
+      process.exit(0);
+    }
+
+    Poke.Heartbeat((err, hb) => {
+      if (err || hb === undefined) {
+          console.log(err);
+      }
+
+      function getName(poke) {
+        const num = parseInt(poke.pokemon.PokemonId);
+        return Poke.pokemonlist[num-1].name;
+      }
+
+      function getImage(poke) {
+        const baseUrl = 'http://ugc.pokevision.com/images/pokemon/';
+        return baseUrl + '' + poke.pokemon.PokemonId + '.png';
+      }
+
+      function getTTL(poke) {
+        const ttlMillis = poke.TimeTillHiddenMs;
+        const mins = Math.floor(ttlMillis / 60000);
+        const secs = ((ttlMillis % 60000) / 1000).toFixed(0);
+        return mins + ':' + (secs < 10 ? '0' : '') + secs;
+      }
+
+      let targetsFound;
+      let totalFound;
+
+      // TODO:
+      // walking can be done by increasing/decreasing the lat/lon coords.
+      // approx 0.001 ~= 360ft (walkable distance)
+      // Increment by hexogonal walk pattern until max delta is ~0.003
+
+      _(hb.cells)
+      .filter(cell => !_.isEmpty(cell.WildPokemon))
+      .flatMap(cell => cell.WildPokemon)
+      .tap(cells => totalFound = cells.length)
+      .filter(cell => _.includes(targetsByName, getName(cell)))
+      .map(cell => {
+        cell.name = getName(cell);
+        cell.img  = getImage(cell);
+        cell.ttl  = getTTL(cell);
+
+        if (targets[cell.name]) {
+          console.log('already found ' + cell.name)
+          return;
         }
 
-        function getName(poke) {
-          const num = parseInt(poke.pokemon.PokemonId);
-          return Poke.pokemonlist[num-1].name;
-        }
+        return Map.generate(config.location, cell, (map) => {
+          cell.map = map;
+          if (_.includes(config.notifications, "text")) {
+            console.log('sending text');
+            text.sendMessage(cell, config.number)
+          }
+          if (_.includes(config.notifications, "email")) {
+            console.log('sending email');
+            //TODO send an email
+          }
+          return targets[cell.name] = true;
+        });
+      })
+      // .tap(cells => console.log(`\nSCAN COMPLETE | ${totalFound} total found | ${targetsFound} targets found\n`))
+      .value();
 
-        function getImage(poke) {
-          const baseUrl = 'http://ugc.pokevision.com/images/pokemon/';
-          return baseUrl + '' + poke.pokemon.PokemonId + '.png';
-        }
-
-        function getTTL(poke) {
-          const ttlMillis = poke.TimeTillHiddenMs;
-          const mins = Math.floor(ttlMillis / 60000);
-          const secs = ((ttlMillis % 60000) / 1000).toFixed(0);
-          return mins + ':' + (secs < 10 ? '0' : '') + secs;
-        }
-
-        let targetsFound;
-        let totalFound;
-
-        _(hb.cells)
-        .filter(cell => !_.isEmpty(cell.WildPokemon))
-        .flatMap(cell => cell.WildPokemon)
-        .tap(cells => totalFound = cells.length)
-        .filter(cell => _.includes(targets, getName(cell)))
-        .tap(cells => targetsFound = cells.length)
-        .map(cell => {
-          cell.name = getName(cell);
-          cell.img = getImage(cell);
-          cell.ttl = getTTL(cell);
-
-          return Map.generate(config.location, cell, (map) => {
-            cell.map = map;
-            console.log(cell)
-            if (_.includes(config.notifications, "text")) {
-              console.log('sending text');
-              text.sendMessage(cell, config.number)
-            }
-            if (_.includes(config.notifications, "email")) {
-              console.log('sending email');
-              //TODO send an email
-            }
-            return true;
-          });
-        })
-        .tap(cells => console.log(`\nSCAN COMPLETE | ${totalFound} total found | ${targetsFound} targets found\n`))
-        .value();
-
-      });
-    }, config.timeout || 5000);
+    });
+  }, config.timeout || 5000);
 });
