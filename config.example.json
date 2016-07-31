@@ -1,5 +1,4 @@
 {
-  "timeout": 5000,
   "notifications": ["email", "text"],
   "number": "+11234567890",
   "email": "you@website.com",
@@ -7,7 +6,11 @@
     "username": "",
     "password": "",
     "provider": "ptc",
-    "location": "Times Square"
+    "location": {
+      "type": "name",
+      "name": "Santa Monica Pier"
+    },
+    "timeout": 5000
   },
   "pokemon": [
     "Rattata",
