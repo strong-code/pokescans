@@ -1,9 +1,9 @@
 # Pokescans
 A scanner with text and email notifications for Pokemon Go.
 
+<img src="./text_detail.jpg" height="100">
 <img src="./pokescans_text.png" height="500">
 <img src="./pokescans_map.png" height="500">
-<img src="./text_detail.jpg" height="500">
 
 ## Setup Instructions
 
