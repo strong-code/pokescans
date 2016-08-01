@@ -1,0 +1,17 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<h1>Scan For Pokemon</h1>
+
+<form action="/", id="scanForm">
+  <input type="text" name="s">
+  <input type="submit" value="Scan!">
+</form>
+
+<script>
+  $("#scanForm").submit(function (event) {
+    event.preventDefault();
+    var targets = $(this).find("input[name='s']").val()
+    $.post('http://localhost:3000/scan', {poke: targets}, function (data) {
+      alert(data);
+    });
+  });
+</script>
